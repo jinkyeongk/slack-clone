@@ -3,14 +3,13 @@ import { Success, Form, Error, Label, Input, LinkContainer, Button, Header } fro
 import fetcher from '@utils/fetcher';
 import axios from 'axios';
 import React, { useCallback, useState } from 'react';
-import { Link } from 'react-router-dom';
-import useSWR from 'swr';
+import { Link, Redirect } from 'react-router-dom';
+import useSWR, { mutate } from 'swr';
 
 const LogIn = () => {
-  const [cond, setCond] = useState();
-  const {data,error}=useSWR(cond ? 'http://localhost:3095/api/users':null,fetcher,
-    {dedupingInterval:100000,
-  });
+
+  const {data,error,mutate}=useSWR('http://localhost:3095/api/users',fetcher);
+  
   const [logInError, setLogInError] = useState(false);
   const [email, onChangeEmail] = useInput('');
   const [password, onChangePassword] = useInput('');
@@ -26,7 +25,8 @@ const LogIn = () => {
             withCredentials:true,
           }
         )
-        .then(() => {
+        .then((response)=>{
+          mutate(response.data, false);
         })
         .catch((error) => {
           setLogInError(error.response?.status === 401);
@@ -35,8 +35,13 @@ const LogIn = () => {
     [email, password],
   );
 
+  if(data===undefined){
+    return <div>로딩중...</div>;
+  }
 
-
+    if(data){
+      return <Redirect to="/workspace/channel" />
+    }
   // console.log(error, userData);
   // if (!error && userData) {
   //   console.log('로그인됨', userData);
